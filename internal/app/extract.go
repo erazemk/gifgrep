@@ -92,7 +92,7 @@ func readInput(input string) ([]byte, error) {
 
 func fetchURL(rawURL string) ([]byte, error) {
 	client := &http.Client{Timeout: 20 * time.Second}
-	req, err := http.NewRequest("GET", rawURL, nil)
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}

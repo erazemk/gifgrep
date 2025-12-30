@@ -163,11 +163,17 @@ func TestBackgroundIndexOutOfRangeUsesTransparent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("png decode failed: %v", err)
 	}
-	_, _, _, a := img.At(0, 0).RGBA()
+	r, g, b, a := img.At(0, 0).RGBA()
+	_ = r
+	_ = g
+	_ = b
 	if a != 0 {
 		t.Fatalf("expected transparent background, got alpha %d", a)
 	}
-	_, _, _, a = img.At(1, 1).RGBA()
+	r, g, b, a = img.At(1, 1).RGBA()
+	_ = r
+	_ = g
+	_ = b
 	if a == 0 {
 		t.Fatalf("expected second frame to draw at offset")
 	}

@@ -286,6 +286,10 @@ func handleInput(state *appState, ev inputEvent, out *bufio.Writer) bool {
 				state.mode = modeBrowse
 				state.renderDirty = true
 			}
+		case keyCtrlC:
+			return true
+		case keyUp, keyDown, keyUnknown:
+			// ignore
 		}
 	case modeBrowse:
 		switch ev.kind {
@@ -328,6 +332,10 @@ func handleInput(state *appState, ev inputEvent, out *bufio.Writer) bool {
 		case keyEsc:
 			state.mode = modeQuery
 			state.renderDirty = true
+		case keyCtrlC:
+			return true
+		case keyBackspace, keyUnknown:
+			// ignore
 		}
 	}
 

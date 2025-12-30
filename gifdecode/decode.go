@@ -167,8 +167,13 @@ func backgroundColor(g *gif.GIF) color.Color {
 }
 
 func encodePNG(img image.Image) ([]byte, error) {
-	buf := pngPool.Get().(*bytes.Buffer)
-	buf.Reset()
+	bufAny := pngPool.Get()
+	buf, ok := bufAny.(*bytes.Buffer)
+	if !ok || buf == nil {
+		buf = new(bytes.Buffer)
+	} else {
+		buf.Reset()
+	}
 	defer pngPool.Put(buf)
 	if err := pngEncoder.Encode(buf, img); err != nil {
 		return nil, err

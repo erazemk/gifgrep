@@ -7,9 +7,16 @@ run:
 linters:
   enable:
     - asciicheck
+    - asasalint
+    - copyloopvar
+    - dogsled
+    - dupword
     - durationcheck
     - errname
     - errcheck
+    - errchkjson
+    - exhaustive
+    - forcetypeassert
     - govet
     - staticcheck
     - unused
@@ -17,14 +24,19 @@ linters:
     - errorlint
     - bodyclose
     - bidichk
+    - gocheckcompilerdirectives
     - gocritic
     - gocyclo
     - misspell
+    - makezero
+    - nilerr
     - nilnil
+    - usestdlibvars
     - unconvert
     - prealloc
     - predeclared
     - nolintlint
+    - wastedassign
     - unparam
 
 linters-settings:

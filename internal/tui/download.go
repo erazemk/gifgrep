@@ -172,7 +172,7 @@ func uniqueFilePath(dir, filename string) (string, error) {
 
 func downloadGIFToFile(gifURL, dest string) error {
 	client := &http.Client{Timeout: 20 * time.Second}
-	req, err := http.NewRequest("GET", gifURL, nil)
+	req, err := http.NewRequest(http.MethodGet, gifURL, nil)
 	if err != nil {
 		return err
 	}

@@ -59,7 +59,7 @@ func fetchTenorV1(query string, opts model.Options) ([]model.Result, error) {
 
 	reqURL := "https://api.tenor.com/v1/search?" + params.Encode()
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", reqURL, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}

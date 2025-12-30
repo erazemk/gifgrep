@@ -56,7 +56,7 @@ type badTenorTransport struct{}
 func (t *badTenorTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	body := "not-json"
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}, nil
@@ -66,7 +66,7 @@ type statusTenorTransport struct{}
 
 func (t *statusTenorTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return &http.Response{
-		StatusCode: 500,
+		StatusCode: http.StatusInternalServerError,
 		Body:       io.NopCloser(strings.NewReader("oops")),
 	}, nil
 }
@@ -89,7 +89,7 @@ type noMediaTransport struct{}
 func (t *noMediaTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	body := `{"results":[{"id":"1","title":"No Media","media":[]},{"id":"2","title":"Gif Only","media":[{"gif":{"url":"https://example.test/full.gif","dims":[10,5]}}]}]}`
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}, nil

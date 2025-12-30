@@ -56,7 +56,7 @@ func fetchGiphyV1(query string, opts model.Options) ([]model.Result, error) {
 
 	reqURL := "https://api.giphy.com/v1/gifs/search?" + params.Encode()
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", reqURL, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ type emptyTenorTransport struct{}
 func (t *emptyTenorTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	body := `{"results":[]}`
 	return &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Header:     http.Header{"Content-Type": []string{"application/json"}},
 		Body:       io.NopCloser(strings.NewReader(body)),
 	}, nil

@@ -21,27 +21,27 @@ func (t *FakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	case "api.tenor.com":
 		body := `{"results":[{"id":"1","title":"Cat One","content_description":"","tags":["cat","fun"],"media":[{"gif":{"url":"https://example.test/full.gif","dims":[200,100]},"tinygif":{"url":"https://example.test/preview.gif","dims":[50,25]}}]}]}`
 		return &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Header:     http.Header{"Content-Type": []string{"application/json"}},
 			Body:       io.NopCloser(strings.NewReader(body)),
 		}, nil
 	case "api.giphy.com":
 		body := `{"data":[{"id":"g1","title":"Cat One","images":{"original":{"url":"https://example.test/full.gif","width":"200","height":"100"},"fixed_width_small":{"url":"https://example.test/preview.gif","width":"50","height":"25"}}}]}`
 		return &http.Response{
-			StatusCode: 200,
+			StatusCode: http.StatusOK,
 			Header:     http.Header{"Content-Type": []string{"application/json"}},
 			Body:       io.NopCloser(strings.NewReader(body)),
 		}, nil
 	case "example.test":
 		if req.URL.Path == "/preview.gif" || req.URL.Path == "/full.gif" {
 			return &http.Response{
-				StatusCode: 200,
+				StatusCode: http.StatusOK,
 				Header:     http.Header{"Content-Type": []string{"image/gif"}},
 				Body:       io.NopCloser(bytes.NewReader(t.GIFData)),
 			}, nil
 		}
 		return &http.Response{
-			StatusCode: 404,
+			StatusCode: http.StatusNotFound,
 			Body:       io.NopCloser(strings.NewReader("not found")),
 		}, nil
 	default:

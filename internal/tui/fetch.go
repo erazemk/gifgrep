@@ -9,7 +9,7 @@ import (
 
 func fetchGIF(gifURL string) ([]byte, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", gifURL, nil)
+	req, err := http.NewRequest(http.MethodGet, gifURL, nil)
 	if err != nil {
 		return nil, err
 	}
