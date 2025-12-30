@@ -295,6 +295,10 @@ func handleInput(state *appState, ev inputEvent, out *bufio.Writer) bool {
 				state.renderDirty = true
 				return false
 			}
+			if ev.ch == 'd' {
+				downloadSelected(state, out)
+				return false
+			}
 			if ev.ch >= 0x20 {
 				state.mode = modeQuery
 				state.status = "Type a search and press Enter"
@@ -350,15 +354,15 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 		return
 	}
 
-	showRight := cols >= 80 && rows >= 14
-	rightWidth := cols
-	leftWidth := cols
+	showRight := cols >= 80 && rows >= 14 && state.currentAnim != nil
+	minListWidth := 28
+	gapCols := 1
+	maxPreviewCols := cols
 	if showRight {
-		rightWidth = maxInt(28, cols/3)
-		if rightWidth > cols-2 {
-			rightWidth = cols - 2
+		maxPreviewCols = cols - minListWidth - gapCols
+		if maxPreviewCols < 10 {
+			showRight = false
 		}
-		leftWidth = cols - rightWidth - 2
 	}
 
 	if state.currentAnim == nil && state.activeImageID != 0 {
@@ -367,7 +371,7 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 	}
 
 	header := styleIf(state.useColor, "gifgrep", "\x1b[1m", "\x1b[36m")
-	header = header + styleIf(state.useColor, " — GIF search", "\x1b[90m")
+	header = header + styleIf(state.useColor, " — Grep the GIF. Stick the landing.", "\x1b[90m")
 	writeLineAt(out, 1, 1, header, cols)
 
 	statusRow := rows - 2
@@ -392,7 +396,7 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 
 	var previewCols, previewRows int
 	if showRight {
-		previewCols, previewRows = fitPreviewSize(leftWidth, contentHeight, state.currentAnim)
+		previewCols, previewRows = fitPreviewSize(maxPreviewCols, contentHeight, state.currentAnim)
 	} else {
 		availRows := contentHeight / 2
 		if availRows < 6 {
@@ -411,8 +415,10 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 	listCol := 1
 	listWidth := cols
 	if showRight {
-		listCol = leftWidth + 2
-		listWidth = rightWidth
+		if previewCols > 0 {
+			listCol = previewCols + gapCols + 1
+			listWidth = maxInt(0, cols-listCol+1)
+		}
 	}
 
 	listHeight := contentHeight
@@ -423,7 +429,8 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 		listHeight = 0
 	}
 
-	if showRight {
+	if showRight && listCol > 1 {
+		leftWidth := listCol - gapCols
 		for i := 0; i < contentHeight; i++ {
 			writeLineAt(out, contentTop+i, 1, "", leftWidth)
 		}
@@ -502,8 +509,12 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 	searchLine := searchLabel + state.query
 	writeLineAt(out, searchRow, 1, searchLine, cols)
 
-	hints := "Enter search  / edit  Up/Down select  q quit"
+	hints := "⏎ Search   / Edit   ↑↓ Select   d Download   q Quit"
 	hints = styleIf(state.useColor, hints, "\x1b[90m")
+	hints = strings.ReplaceAll(hints, "⏎", styleIf(state.useColor, "⏎", "\x1b[1m", "\x1b[36m"))
+	hints = strings.ReplaceAll(hints, "↑↓", styleIf(state.useColor, "↑↓", "\x1b[1m", "\x1b[36m"))
+	hints = strings.ReplaceAll(hints, "d", styleIf(state.useColor, "d", "\x1b[1m", "\x1b[36m"))
+	hints = strings.ReplaceAll(hints, "q", styleIf(state.useColor, "q", "\x1b[1m", "\x1b[36m"))
 	writeLineAt(out, hintsRow, 1, hints, cols)
 
 	for row := 1; row <= rows; row++ {
