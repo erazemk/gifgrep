@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>gifgrep</title>
+<meta http-equiv="refresh" content="0; url=/" />
+<script>
+  // GitHub Pages deep-link fix (single-page-ish sites).
+  // Redirect to / and keep the path in hash for manual debugging.
+  const path = location.pathname + location.search + location.hash;
+  location.replace("/#" + encodeURIComponent(path));
+</script>

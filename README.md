@@ -1,42 +1,64 @@
-# gifgrep
+# 🧲 gifgrep — Grep the GIF. Stick the landing.
 
-CLI GIF search with two brains:
-- Scriptable mode (default): URLs/JSON for pipes
-- TUI mode (`--tui`): arrow-key browse + kitty preview
+Two modes. Same mission.
+- **Scriptable CLI (default):** prints GIF URLs (or JSON) for pipes
+- **Interactive TUI (`--tui`):** arrow-key browse + inline preview (kitty protocol)
+
+Website: `https://gifgrep.com`
+
+## Install
+- Homebrew: `brew install steipete/tap/gifgrep`
+- Go: `go install github.com/steipete/gifgrep/cmd/gifgrep@latest`
+
+## Quickstart
+```bash
+gifgrep cats -m 5
+gifgrep cats --json | jq '.[] | .url'
+gifgrep --tui "office handshake"
+```
 
 ## Requirements
-- Terminal with Kitty graphics (Kitty, Ghostty) for inline preview
-- Go 1.21+
+- **CLI mode:** any terminal
+- **TUI preview:** terminal with Kitty graphics (Kitty, Ghostty)
+- **Build from source:** Go 1.25+ (see `go.mod` toolchain)
 
-## Usage
-Scriptable:
-```bash
-export TENOR_API_KEY=your_key # optional; falls back to LIVDSRZULELA
+## Flags
+```text
+gifgrep [flags] <query>
+gifgrep --tui [flags] <query>
 
-gifgrep cats
-
-gifgrep cats --json | jq '.[] | .url'
+-i            ignore case
+-v            invert vibe (exclude mood)
+-E            regex filter over title+tags
+-n            number results
+-m <N>        max results
+--mood <s>    mood filter
+--json        json output
+--tui         interactive mode
+--source <s>  source (tenor)
+--version     show version
 ```
 
-TUI:
+## JSON output
+`--json` prints an array of results like:
+- `id`, `title`, `url`, `preview_url`
+- `tags` (optional), `width`, `height` (optional)
+
+## Environment variables
+- `TENOR_API_KEY` (optional): defaults to Tenor’s public demo key if unset
+- `GIFGREP_SOFTWARE_ANIM=1` (optional): force software animation (auto-detects Ghostty)
+- `GIFGREP_CELL_ASPECT=0.5` (optional): tweak preview sizing for your terminal’s cell geometry
+
+## Development
 ```bash
-gifgrep --tui cats
+go test ./...
+go run ./cmd/gifgrep --help
+```
+If you’re hacking on the Ghostty web snapshot script:
+```bash
+pnpm install
+pnpm snap
 ```
 
-## Flags (subset)
-- `-m N` max results
-- `-n` number results
-- `-i` ignore case (filters)
-- `-E` regex filter (title+tags)
-- `-v` invert vibe (exclude `--mood` matches)
-- `--mood angry`
-- `--source tenor`
-
-## pnpm scripts
-```bash
-pnpm start
-pnpm tenor
-pnpm test
-pnpm check
-pnpm build
-```
+## GitHub Pages
+The landing page lives in `docs/` (set GitHub Pages to “Deploy from a branch” → `main` → `/docs`).

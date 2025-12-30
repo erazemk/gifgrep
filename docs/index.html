@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>gifgrep — Grep the GIF. Stick the landing.</title>
+    <meta
+      name="description"
+      content="gifgrep is a tiny CLI/TUI to search GIFs from your terminal. Scriptable URLs/JSON, or an interactive kitty-preview browser."
+    />
+    <meta name="color-scheme" content="light" />
+
+    <meta property="og:title" content="gifgrep — Grep the GIF. Stick the landing." />
+    <meta
+      property="og:description"
+      content="CLI/TUI GIF search: pipeable URLs/JSON, or arrow-key browse with inline kitty previews."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gifgrep.com" />
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%A7%B2%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="kicker">CLI / TUI · Tenor · kitty graphics</div>
+          <h1>🧲 gifgrep</h1>
+          <p class="tagline">
+            <strong>Grep the GIF. Stick the landing.</strong> Scriptable URLs/JSON by default, plus a TUI that previews
+            inline (kitty protocol) when you feel fancy.
+          </p>
+          <div class="pills" aria-label="Highlights">
+            <div class="pill"><b>default</b> prints URLs (pipes love this)</div>
+            <div class="pill"><b>--json</b> when you need metadata</div>
+            <div class="pill"><b>--tui</b> for arrow-key browsing</div>
+          </div>
+          <p class="fineprint">
+            Needs a Tenor API key? Optional. Set <code>TENOR_API_KEY</code> or it falls back to Tenor’s public demo key.
+            Inline previews need Kitty or Ghostty.
+          </p>
+        </div>
+
+        <div class="terminal" aria-label="Example output">
+          <div class="dots" aria-hidden="true">
+            <div class="dot r"></div>
+            <div class="dot y"></div>
+            <div class="dot g"></div>
+          </div>
+          <div class="prompt">
+            <span class="out">$ </span><span class="cmd">gifgrep cats -m 3</span>
+            <span class="caret" aria-hidden="true"></span>
+            <span class="out">
+https://media.tenor.com/.../cat-typing.gif
+https://media.tenor.com/.../cat-yes.gif
+https://media.tenor.com/.../cat-stare.gif
+
+$ gifgrep --tui "office handshake"
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="section">
+            <h2>Install</h2>
+            <p>Pick your poison:</p>
+            <div class="cmdrow">
+              <div class="code">brew install steipete/tap/gifgrep</div>
+              <button class="copy" data-copy="brew install steipete/tap/gifgrep" aria-label="Copy brew install command">
+                copy
+              </button>
+            </div>
+            <div class="cmdrow">
+              <div class="code">go install github.com/steipete/gifgrep/cmd/gifgrep@latest</div>
+              <button
+                class="copy"
+                data-copy="go install github.com/steipete/gifgrep/cmd/gifgrep@latest"
+                aria-label="Copy go install command"
+              >
+                copy
+              </button>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Use</h2>
+            <ul>
+              <li><code>gifgrep cats</code> prints URLs (perfect for pipes).</li>
+              <li><code>gifgrep cats --json</code> prints structured results.</li>
+              <li><code>gifgrep --tui cats</code> opens the interactive browser.</li>
+              <li><code>-i</code>, <code>-E</code>, <code>--mood</code>, <code>-v</code> for “grep but for vibes”.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section">
+            <h2>Terminal notes</h2>
+            <ul>
+              <li>Inline previews use Kitty graphics (Kitty, Ghostty).</li>
+              <li>
+                Ghostty currently wants software animation:
+                <code>GIFGREP_SOFTWARE_ANIM=1</code> (auto-detected).
+              </li>
+              <li>
+                Preview sizing uses <code>GIFGREP_CELL_ASPECT</code> (default <code>0.5</code>).
+              </li>
+            </ul>
+          </div>
+
+          <div class="section">
+            <h2>Source / code</h2>
+            <p>
+              It’s Go. It’s tiny. It cleans up after itself. Or at least it tries.
+              <a href="https://github.com/steipete/gifgrep">GitHub</a>.
+            </p>
+            <p class="fineprint">If you somehow manage to grep the wrong GIF: that’s on you. ❤️</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="links">
+          <a href="https://github.com/steipete/gifgrep">github.com/steipete/gifgrep</a>
+          <a href="https://tenor.com">Tenor</a>
+        </div>
+        <div>© Peter Steinberger · MIT · GIFs courtesy Tenor</div>
+      </div>
+    </div>
+
+    <script src="assets/site.js"></script>
+  </body>
+</html>
