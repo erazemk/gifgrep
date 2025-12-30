@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/steipete/gifgrep/internal/model"
 	"github.com/steipete/gifgrep/internal/search"
@@ -22,6 +24,7 @@ func parseArgs(args []string) (model.Options, string, error) {
 	var opts model.Options
 	var showHelp bool
 	var showVersion bool
+	var stillRaw string
 	fs := flag.NewFlagSet(model.AppName, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.BoolVar(&showHelp, "help", false, "help")
@@ -37,6 +40,12 @@ func parseArgs(args []string) (model.Options, string, error) {
 	fs.StringVar(&opts.Source, "source", "auto", "source: auto|tenor|giphy")
 	fs.StringVar(&opts.Mood, "mood", "", "mood filter")
 	fs.StringVar(&opts.Color, "color", "auto", "color: auto|always|never")
+	fs.StringVar(&opts.GifInput, "gif", "", "gif input path or URL")
+	fs.StringVar(&stillRaw, "still", "", "extract still at time (e.g. 1.5s)")
+	fs.IntVar(&opts.StillsCount, "stills", 0, "contact sheet frame count")
+	fs.IntVar(&opts.StillsCols, "stills-cols", 0, "contact sheet columns")
+	fs.IntVar(&opts.StillsPadding, "stills-padding", 2, "contact sheet padding (px)")
+	fs.StringVar(&opts.OutPath, "out", "", "output path or '-' for stdout")
 
 	if err := fs.Parse(args); err != nil {
 		return opts, "", errors.New("bad args")
@@ -51,6 +60,15 @@ func parseArgs(args []string) (model.Options, string, error) {
 		return opts, "", errVersion
 	}
 
+	if stillRaw != "" {
+		parsed, err := parseDurationValue(stillRaw)
+		if err != nil {
+			return opts, "", errors.New("bad args")
+		}
+		opts.StillSet = true
+		opts.StillAt = parsed
+	}
+
 	query := strings.TrimSpace(strings.Join(fs.Args(), " "))
 	return opts, query, nil
 }
@@ -60,6 +78,8 @@ func printUsage(w io.Writer) {
 	_, _ = fmt.Fprintln(w, "Usage:")
 	_, _ = fmt.Fprintln(w, "  gifgrep [flags] <query>")
 	_, _ = fmt.Fprintln(w, "  gifgrep --tui [flags] <query>")
+	_, _ = fmt.Fprintln(w, "  gifgrep --gif <path|url> --still <time> [--out <file>]")
+	_, _ = fmt.Fprintln(w, "  gifgrep --gif <path|url> --stills <N> [--stills-cols <N>] [--out <file>]")
 	_, _ = fmt.Fprintln(w, "")
 	_, _ = fmt.Fprintln(w, "Flags:")
 	_, _ = fmt.Fprintln(w, "  -i            ignore case")
@@ -71,8 +91,30 @@ func printUsage(w io.Writer) {
 	_, _ = fmt.Fprintln(w, "  --json        json output")
 	_, _ = fmt.Fprintln(w, "  --tui         interactive mode")
 	_, _ = fmt.Fprintln(w, "  --source <s>  source (auto, tenor, giphy)")
+	_, _ = fmt.Fprintln(w, "  --gif <s>     gif input path or URL")
+	_, _ = fmt.Fprintln(w, "  --still <s>   extract still at time (e.g. 1.5s)")
+	_, _ = fmt.Fprintln(w, "  --stills <N>  contact sheet frame count")
+	_, _ = fmt.Fprintln(w, "  --stills-cols <N>    contact sheet columns")
+	_, _ = fmt.Fprintln(w, "  --stills-padding <N> contact sheet padding (px)")
+	_, _ = fmt.Fprintln(w, "  --out <s>     output path or '-' for stdout")
 	_, _ = fmt.Fprintln(w, "  --version     show version")
 	_, _ = fmt.Fprintln(w, "  -h, --help    show help")
+}
+
+func parseDurationValue(raw string) (time.Duration, error) {
+	if raw == "" {
+		return 0, errors.New("empty duration")
+	}
+	if d, err := time.ParseDuration(raw); err == nil {
+		return d, nil
+	}
+	if secs, err := strconv.ParseFloat(raw, 64); err == nil {
+		if secs < 0 {
+			return 0, errors.New("negative duration")
+		}
+		return time.Duration(secs * float64(time.Second)), nil
+	}
+	return 0, errors.New("invalid duration")
 }
 
 func runScript(opts model.Options, query string) error {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/steipete/gifgrep/internal/testutil"
 	"github.com/steipete/gifgrep/internal/tui"
 	"golang.org/x/term"
 )
@@ -58,6 +59,42 @@ func TestRunArgs(t *testing.T) {
 		})
 		if code := Run([]string{"--tui"}); code != 0 {
 			t.Fatalf("expected exit 0")
+		}
+	})
+
+	t.Run("tui with extract flags", func(t *testing.T) {
+		if code := Run([]string{"--tui", "--gif", "nope.gif", "--still", "0"}); code != 1 {
+			t.Fatalf("expected exit 1")
+		}
+	})
+
+	t.Run("extract still", func(t *testing.T) {
+		tmp, err := os.CreateTemp(t.TempDir(), "gifgrep-*.gif")
+		if err != nil {
+			t.Fatalf("temp file: %v", err)
+		}
+		if _, err := tmp.Write(testutil.MakeTestGIF()); err != nil {
+			t.Fatalf("write gif: %v", err)
+		}
+		if err := tmp.Close(); err != nil {
+			t.Fatalf("close gif: %v", err)
+		}
+
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+		t.Cleanup(func() {
+			os.Stdout = oldStdout
+		})
+
+		code := Run([]string{"--gif", tmp.Name(), "--still", "0", "--out", "-"})
+		_ = w.Close()
+		if code != 0 {
+			t.Fatalf("expected exit 0")
+		}
+		out, _ := io.ReadAll(r)
+		if !bytes.HasPrefix(out, []byte{0x89, 'P', 'N', 'G'}) {
+			t.Fatalf("expected png output")
 		}
 	})
 }

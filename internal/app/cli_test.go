@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/steipete/gifgrep/internal/model"
 	"github.com/steipete/gifgrep/internal/testutil"
@@ -36,9 +37,28 @@ func TestParseArgs(t *testing.T) {
 		t.Fatalf("unexpected query: %q", query)
 	}
 
+	opts, query, err = parseArgs([]string{"--gif", "cat.gif", "--still", "1.5", "--out", "-", "ignored"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if opts.GifInput != "cat.gif" || !opts.StillSet || opts.StillAt != 1500*time.Millisecond {
+		t.Fatalf("still options not parsed")
+	}
+	if opts.OutPath != "-" {
+		t.Fatalf("out not parsed")
+	}
+	if query != "ignored" {
+		t.Fatalf("unexpected query: %q", query)
+	}
+
 	_, _, err = parseArgs([]string{"--nope"})
 	if err == nil {
 		t.Fatalf("expected error for bad args")
+	}
+
+	_, _, err = parseArgs([]string{"--still", "nope"})
+	if err == nil {
+		t.Fatalf("expected error for bad duration")
 	}
 }
 

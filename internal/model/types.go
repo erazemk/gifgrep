@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 const AppName = "gifgrep"
 
 var Version = "dev"
@@ -15,14 +17,21 @@ type Result struct {
 }
 
 type Options struct {
-	TUI        bool
-	JSON       bool
-	IgnoreCase bool
-	Invert     bool
-	Regex      bool
-	Number     bool
-	Limit      int
-	Source     string
-	Mood       string
-	Color      string
+	TUI           bool
+	JSON          bool
+	IgnoreCase    bool
+	Invert        bool
+	Regex         bool
+	Number        bool
+	Limit         int
+	Source        string
+	Mood          string
+	Color         string
+	GifInput      string
+	StillAt       time.Duration
+	StillSet      bool
+	StillsCount   int
+	StillsCols    int
+	StillsPadding int
+	OutPath       string
 }
