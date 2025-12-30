@@ -37,6 +37,17 @@ var regularTaglines = []string{
 	"Arrow keys in, serotonin out.",
 	"Find the bit. Drop the mic. Paste the GIF.",
 	"Less scrolling, more scene-stealing.",
+	"Because “as discussed” needs a reaction.",
+	"Ship it. Clip it. GIF it.",
+	"Find the vibe. Hit enter.",
+	"Keep calm and keep looping.",
+	"Regex the drama away.",
+	"No emoji. All motion.",
+	"When the thread is on fire, bring popcorn.",
+	"Paste responsibly.",
+	"Make the terminal do emotional labor.",
+	"For when Slack is down but feelings aren’t.",
+	"Because screenshots don’t move.",
 }
 
 var holidayTaglines = []string{
