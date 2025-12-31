@@ -23,6 +23,8 @@ type Options struct {
 	Verbose int
 	Quiet   bool
 	Reveal  bool
+	Format  string
+	Thumbs  string
 
 	JSON   bool
 	Number bool

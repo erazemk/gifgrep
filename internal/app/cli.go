@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,6 +54,8 @@ type SearchCmd struct {
 	Max    int    `help:"Max results to fetch." name:"max" short:"m" default:"20"`
 	JSON   bool   `help:"Emit JSON array of results."`
 	Number bool   `help:"Prefix lines with 1-based index." short:"n"`
+	Format string `help:"Output format." enum:"auto,plain,tsv,md,url,comment,json" default:"auto"`
+	Thumbs string `help:"Inline thumbnails (kitty graphics; TTY only)." enum:"auto,always,never" default:"auto"`
 
 	Query []string `arg:"" name:"query" help:"Search query."`
 }
@@ -68,6 +71,8 @@ func (c *SearchCmd) Run(ctx *kong.Context, cli *CLI) error {
 	opts.Number = c.Number
 	opts.Limit = c.Max
 	opts.Source = c.Source
+	opts.Format = c.Format
+	opts.Thumbs = c.Thumbs
 	return runSearch(ctx.Stdout, ctx.Stderr, opts, query)
 }
 
@@ -153,33 +158,75 @@ func runSearch(stdout io.Writer, stderr io.Writer, opts model.Options, query str
 		return err
 	}
 
-	if opts.JSON {
-		enc := json.NewEncoder(stdout)
+	format := resolveOutputFormat(opts, stdout)
+	out := bufio.NewWriter(stdout)
+	defer func() { _ = out.Flush() }()
+	if format == formatJSON {
+		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(results)
 	}
 
 	useColor := shouldUseColor(opts, stdout)
-	for i, res := range results {
-		prefix := ""
-		if opts.Number {
-			prefix = fmt.Sprintf("%d\t", i+1)
+	withThumbs := wantsThumbnails(opts, stdout, format)
+
+	switch format {
+	case formatPlain:
+		renderPlain(out, opts, useColor, withThumbs, results)
+		return nil
+	case formatURL:
+		for i, res := range results {
+			url := res.URL
+			if opts.Number {
+				_, _ = fmt.Fprintf(out, "%d\t%s\n", i+1, url)
+				continue
+			}
+			_, _ = fmt.Fprintln(out, url)
 		}
-		label := strings.Join(strings.Fields(res.Title), " ")
-		if label == "" {
-			label = strings.Join(strings.Fields(res.ID), " ")
+		return nil
+	case formatMD:
+		for i, res := range results {
+			title := normalizeTitle(res)
+			url := res.URL
+			prefix := "- "
+			if opts.Number {
+				prefix = fmt.Sprintf("%d. ", i+1)
+			}
+			_, _ = fmt.Fprintf(out, "%s[%s](%s)\n", prefix, title, url)
 		}
-		if label == "" {
-			label = "untitled"
+		return nil
+	case formatComment:
+		for i, res := range results {
+			title := normalizeTitle(res)
+			url := res.URL
+			if opts.Number {
+				_, _ = fmt.Fprintf(out, "%d\t%s  # %s\n", i+1, url, title)
+				continue
+			}
+			_, _ = fmt.Fprintf(out, "%s  # %s\n", url, title)
 		}
-		url := res.URL
-		if useColor {
-			label = "\x1b[1m" + label + "\x1b[0m"
-			url = "\x1b[36m" + url + "\x1b[0m"
+		return nil
+	case formatJSON:
+		// handled above
+		return nil
+	case formatTSV, formatAuto:
+		fallthrough
+	default:
+		for i, res := range results {
+			title := normalizeTitle(res)
+			url := res.URL
+			if useColor {
+				title = "\x1b[1m" + title + "\x1b[0m"
+				url = "\x1b[36m" + url + "\x1b[0m"
+			}
+			if opts.Number {
+				_, _ = fmt.Fprintf(out, "%d\t%s\t%s\n", i+1, title, url)
+				continue
+			}
+			_, _ = fmt.Fprintf(out, "%s\t%s\n", title, url)
 		}
-		_, _ = fmt.Fprintf(stdout, "%s%s\t%s\n", prefix, label, url)
+		return nil
 	}
-	return nil
 }
 
 func shouldUseColor(opts model.Options, w io.Writer) bool {
