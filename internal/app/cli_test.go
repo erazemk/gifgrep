@@ -14,20 +14,14 @@ import (
 func TestRunSearchOutput(t *testing.T) {
 	gifData := testutil.MakeTestGIF()
 	testutil.WithTransport(t, &testutil.FakeTransport{GIFData: gifData}, func() {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-		t.Cleanup(func() {
-			os.Stdout = oldStdout
-		})
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
 
-		err := runSearch(model.Options{Number: true, Limit: 1, Source: "tenor"}, "cats")
-		_ = w.Close()
+		err := runSearch(&stdout, &stderr, model.Options{Number: true, Limit: 1, Source: "tenor"}, "cats")
 		if err != nil {
 			t.Fatalf("runSearch failed: %v", err)
 		}
-		out, _ := io.ReadAll(r)
-		if !strings.Contains(string(out), "1\t") {
+		if !strings.Contains(stdout.String(), "1\t") {
 			t.Fatalf("expected numbered output")
 		}
 	})
@@ -36,20 +30,14 @@ func TestRunSearchOutput(t *testing.T) {
 func TestRunSearchJSON(t *testing.T) {
 	gifData := testutil.MakeTestGIF()
 	testutil.WithTransport(t, &testutil.FakeTransport{GIFData: gifData}, func() {
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-		t.Cleanup(func() {
-			os.Stdout = oldStdout
-		})
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
 
-		err := runSearch(model.Options{JSON: true, Limit: 1, Source: "tenor"}, "cats")
-		_ = w.Close()
+		err := runSearch(&stdout, &stderr, model.Options{JSON: true, Limit: 1, Source: "tenor"}, "cats")
 		if err != nil {
 			t.Fatalf("runSearch json failed: %v", err)
 		}
-		out, _ := io.ReadAll(r)
-		if !bytes.Contains(out, []byte(`"preview_url"`)) {
+		if !bytes.Contains(stdout.Bytes(), []byte(`"preview_url"`)) {
 			t.Fatalf("expected json output")
 		}
 	})
