@@ -22,7 +22,6 @@ func Run(args []string) int {
 	cli := &CLI{}
 	parser, err := kong.New(cli,
 		kong.Name(model.AppName),
-		kong.Description(model.Tagline),
 		kong.Vars{"version": model.AppName + " " + model.Version},
 		kong.Help(helpPrinter),
 		kong.ConfigureHelp(kong.HelpOptions{
