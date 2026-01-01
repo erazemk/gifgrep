@@ -190,6 +190,41 @@ func TestRenderItermErasesContentOnSend(t *testing.T) {
 	}
 }
 
+func TestRenderItermHardClearsOnShrink(t *testing.T) {
+	prev := clearItermScreenFn
+	t.Cleanup(func() { clearItermScreenFn = prev })
+
+	var clears int
+	clearItermScreenFn = func(_ *bufio.Writer) { clears++ }
+
+	state := &appState{
+		mode:   modeBrowse,
+		inline: termcaps.InlineIterm,
+		results: []model.Result{
+			{Title: "A"},
+		},
+		currentAnim:      &gifAnimation{ID: 1, RawGIF: []byte("GIF89a\x01\x00\x01\x00"), Width: 800, Height: 100},
+		previewNeedsSend: true,
+		opts:             model.Options{Source: "tenor"},
+	}
+
+	var buf bytes.Buffer
+	out := bufio.NewWriter(&buf)
+
+	render(state, out, 20, 120) // first send sets itermLast
+	if clears != 0 {
+		t.Fatalf("expected no hard clear on first send, got %d", clears)
+	}
+
+	// Switch to tall/narrow GIF => preview shrinks, should hard clear to avoid leftover image cells.
+	state.currentAnim = &gifAnimation{ID: 2, RawGIF: []byte("GIF89a\x01\x00\x01\x00"), Width: 100, Height: 800}
+	state.previewNeedsSend = true
+	render(state, out, 20, 120)
+	if clears != 1 {
+		t.Fatalf("expected 1 hard clear on shrink, got %d", clears)
+	}
+}
+
 func TestRenderWithPreviewRight(t *testing.T) {
 	state := &appState{
 		mode:    modeBrowse,

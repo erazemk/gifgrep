@@ -395,6 +395,20 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 
 	layout := buildLayout(state, rows, cols)
 
+	if state.inline == termcaps.InlineIterm && layout.showRight && shouldSendItermPreview(state, layout) {
+		if shouldHardClearIterm(state, layout) {
+			clearItermScreenFn(out)
+			state.itermLast = struct {
+				row  int
+				col  int
+				cols int
+				rows int
+			}{}
+		} else {
+			eraseItermContentAreaFn(out, layout)
+		}
+	}
+
 	if state.currentAnim == nil && state.activeImageID != 0 {
 		if state.inline == termcaps.InlineKitty {
 			kitty.DeleteImage(out, state.activeImageID)
@@ -427,12 +441,6 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 	}
 
 	state.lastShowRight = layout.showRight
-
-	if state.inline == termcaps.InlineIterm && layout.showRight {
-		if shouldSendItermPreview(state, layout) {
-			eraseItermContentAreaFn(out, layout)
-		}
-	}
 
 	drawList(out, state, layout)
 	if state.inline == termcaps.InlineIterm && layout.showRight {
@@ -1006,3 +1014,50 @@ func eraseItermContentArea(out *bufio.Writer, layout layout) {
 }
 
 var eraseItermContentAreaFn = eraseItermContentArea
+
+func shouldHardClearIterm(state *appState, layout layout) bool {
+	if state == nil || state.inline != termcaps.InlineIterm || !layout.showRight {
+		return false
+	}
+	if state.itermLast.cols <= 0 || state.itermLast.rows <= 0 {
+		return false
+	}
+	newRow := layout.previewRow
+	newCol := 1
+	newCols := layout.previewCols
+	newRows := layout.previewRows
+	if newCols <= 0 || newRows <= 0 {
+		return false
+	}
+	return !rectCovers(
+		itermRect{row: newRow, col: newCol, cols: newCols, rows: newRows},
+		itermRect{row: state.itermLast.row, col: state.itermLast.col, cols: state.itermLast.cols, rows: state.itermLast.rows},
+	)
+}
+
+type itermRect struct {
+	row  int
+	col  int
+	cols int
+	rows int
+}
+
+func rectCovers(outer, inner itermRect) bool {
+	if outer.cols <= 0 || outer.rows <= 0 || inner.cols <= 0 || inner.rows <= 0 {
+		return false
+	}
+	outerRight := outer.col + outer.cols - 1
+	outerBottom := outer.row + outer.rows - 1
+	innerRight := inner.col + inner.cols - 1
+	innerBottom := inner.row + inner.rows - 1
+	return outer.col <= inner.col && outer.row <= inner.row && outerRight >= innerRight && outerBottom >= innerBottom
+}
+
+func clearItermScreen(out *bufio.Writer) {
+	if out == nil {
+		return
+	}
+	_, _ = fmt.Fprint(out, "\x1b[2J\x1b[H")
+}
+
+var clearItermScreenFn = clearItermScreen
