@@ -33,6 +33,8 @@ type gifCacheEntry struct {
 type appState struct {
 	query         string
 	tagline       string
+	headerFlash   string
+	headerFlashAt time.Time
 	results       []model.Result
 	selected      int
 	scroll        int

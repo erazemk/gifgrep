@@ -14,24 +14,24 @@ var revealFn = reveal.Reveal
 
 func downloadSelected(state *appState, out *bufio.Writer, revealAfter bool) {
 	if state.selected < 0 || state.selected >= len(state.results) {
-		state.status = "No selection"
+		flashHeader(state, "No selection")
 		state.renderDirty = true
 		return
 	}
 	item := state.results[state.selected]
 	if item.URL == "" {
-		state.status = "No URL"
+		flashHeader(state, "No URL")
 		state.renderDirty = true
 		return
 	}
-	state.status = "Downloading..."
+	flashHeader(state, "Downloading…")
 	state.renderDirty = true
 	render(state, out, state.lastRows, state.lastCols)
 	_ = out.Flush()
 
 	filePath, err := downloadToDownloadsFn(item)
 	if err != nil {
-		state.status = "Download error: " + err.Error()
+		flashHeader(state, "Download error: "+err.Error())
 		state.renderDirty = true
 		return
 	}
@@ -39,27 +39,27 @@ func downloadSelected(state *appState, out *bufio.Writer, revealAfter bool) {
 	trackSavedPath(state, item, filePath)
 	if revealAfter {
 		if err := revealFn(filePath); err != nil {
-			state.status = "Saved " + filePath + " (reveal failed)"
+			flashHeader(state, "Saved (reveal failed)")
 			state.renderDirty = true
 			return
 		}
-		state.status = "Saved " + filePath + " (revealed)"
+		flashHeader(state, "Saved (revealed)")
 		state.renderDirty = true
 		return
 	}
-	state.status = "Saved " + filePath
+	flashHeader(state, "Saved")
 	state.renderDirty = true
 }
 
 func handleRevealSelected(state *appState, out *bufio.Writer) bool {
 	if state.selected < 0 || state.selected >= len(state.results) {
-		state.status = "No selection"
+		flashHeader(state, "No selection")
 		state.renderDirty = true
 		return false
 	}
 	item := state.results[state.selected]
 	if item.URL == "" {
-		state.status = "No URL"
+		flashHeader(state, "No URL")
 		state.renderDirty = true
 		return false
 	}
@@ -75,11 +75,11 @@ func handleRevealSelected(state *appState, out *bufio.Writer) bool {
 	}
 
 	if err := revealFn(filePath); err != nil {
-		state.status = "Reveal failed: " + err.Error()
+		flashHeader(state, "Reveal failed: "+err.Error())
 		state.renderDirty = true
 		return false
 	}
-	state.status = "Revealed " + filePath
+	flashHeader(state, "Revealed")
 	state.renderDirty = true
 	return false
 }

@@ -42,6 +42,8 @@ var ErrNotTerminal = errors.New("stdin is not a tty")
 
 const giphyAttributionImageID uint32 = 0x67697068 // "giph"
 
+var nowFn = time.Now
+
 func Run(opts model.Options, query string) error {
 	env := defaultEnvFn()
 	return runWith(env, opts, query)
@@ -400,7 +402,15 @@ func render(state *appState, out *bufio.Writer, rows, cols int) {
 		state.activeImageID = 0
 	}
 
-	drawHeader(out, state.useColor, cols, state.tagline)
+	if !state.headerFlashAt.IsZero() && nowFn().After(state.headerFlashAt) {
+		state.headerFlash = ""
+		state.headerFlashAt = time.Time{}
+	}
+	headerTagline := state.tagline
+	if strings.TrimSpace(state.headerFlash) != "" {
+		headerTagline = state.headerFlash
+	}
+	drawHeader(out, state.useColor, cols, headerTagline)
 
 	if !layout.hasContent {
 		clearAll(out, rows, cols)
@@ -512,7 +522,12 @@ func drawHeader(out *bufio.Writer, useColor bool, cols int, tagline string) {
 	if strings.TrimSpace(tagline) == "" {
 		tagline = model.Tagline
 	}
-	header += styleIf(useColor, " — "+tagline, "\x1b[90m")
+	codes := []string{"\x1b[90m"}
+	if useColor && strings.TrimSpace(tagline) != "" && tagline != model.Tagline {
+		// Likely an action flash; make it pop a bit.
+		codes = []string{"\x1b[33m"}
+	}
+	header += styleIf(useColor, " — "+tagline, codes...)
 	writeLineAt(out, 1, 1, header, cols)
 }
 
@@ -909,3 +924,15 @@ func clearItermRect(out *bufio.Writer, row, col, cols, rows int) {
 }
 
 var clearItermRectFn = clearItermRect
+
+func flashHeader(state *appState, msg string) {
+	if state == nil {
+		return
+	}
+	msg = strings.TrimSpace(msg)
+	if msg == "" {
+		return
+	}
+	state.headerFlash = msg
+	state.headerFlashAt = nowFn().Add(3 * time.Second)
+}

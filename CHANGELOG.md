@@ -13,6 +13,7 @@
 - TUI: fix hint row centering for wide glyphs (emoji/symbols).
 - iTerm2: keep animated previews running after UI redraws (don’t clear preview every render).
 - iTerm2: clear previous preview when re-sending (avoid “stacked” images after reveal/resize).
+- TUI: show download/reveal transient status in the header (no “sticky” status row spam).
 
 ### Dev
 - Replace pnpm workflow with `make` + npm (`make snap`, `make gifgrep ...`).
