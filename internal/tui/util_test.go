@@ -69,4 +69,8 @@ func TestHelpers(t *testing.T) {
 	if visibleRuneLen("\x1b[31mhi\x1b[0m") != 2 {
 		t.Fatalf("visibleRuneLen failed")
 	}
+	// Ensure wide runes don't break centering/truncation.
+	if visibleRuneLen("🧲") != 2 {
+		t.Fatalf("expected magnet emoji to be width 2")
+	}
 }

@@ -10,6 +10,7 @@
 - TUI: avoid emitting Kitty graphics sequences on unsupported terminals (no more base64 spew).
 - TUI: when inline images aren’t supported, exit with a helpful “supported terminals / protocol” message.
 - Inline detection: use Kitty graphics query (a=q) when available to avoid false positives.
+- TUI: fix hint row centering for wide glyphs (emoji/symbols).
 
 ### Dev
 - Replace pnpm workflow with `make` + npm (`make snap`, `make gifgrep ...`).

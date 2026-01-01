@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 func truncateRunes(s string, width int) string {
@@ -44,11 +46,15 @@ func truncateANSI(s string, width int) string {
 		if r == utf8.RuneError && size == 1 {
 			size = 1
 		}
-		if visible+1 > width {
+		w := runewidth.RuneWidth(r)
+		if w < 0 {
+			w = 0
+		}
+		if visible+w > width {
 			break
 		}
 		out.WriteRune(r)
-		visible++
+		visible += w
 		i += size
 	}
 	if hadANSI && !strings.HasSuffix(out.String(), "\x1b[0m") {
@@ -71,11 +77,15 @@ func visibleRuneLen(s string) int {
 			i = j
 			continue
 		}
-		_, size := utf8.DecodeRuneInString(s[i:])
+		r, size := utf8.DecodeRuneInString(s[i:])
 		if size == 0 {
 			break
 		}
-		visible++
+		w := runewidth.RuneWidth(r)
+		if w < 0 {
+			w = 0
+		}
+		visible += w
 		i += size
 	}
 	return visible
