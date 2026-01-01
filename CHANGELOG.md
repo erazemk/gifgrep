@@ -18,6 +18,7 @@
 
 ### Dev
 - Replace pnpm workflow with `make` + npm (`make snap`, `make gifgrep ...`).
+- Drop Node `run-go` wrapper; `make gifgrep ...` rebuilds via Go deps.
 - Add macOS terminal capability e2e smoke: `make termcaps-e2e`.
 - Tests: add iTerm2 redraw regression for inline previews.
 
