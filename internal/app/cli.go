@@ -15,6 +15,7 @@ import (
 	"github.com/steipete/gifgrep/internal/model"
 	"github.com/steipete/gifgrep/internal/reveal"
 	"github.com/steipete/gifgrep/internal/search"
+	"github.com/steipete/gifgrep/internal/termcaps"
 	"github.com/steipete/gifgrep/internal/tui"
 	"golang.org/x/term"
 )
@@ -194,10 +195,18 @@ func runSearch(stdout io.Writer, stderr io.Writer, opts model.Options, query str
 
 	useColor := shouldUseColor(opts, stdout)
 	thumbs := thumbsProtocol(opts, stdout, format)
+	termCols := 0
+	if thumbs != termcaps.InlineNone {
+		if f, ok := stdout.(*os.File); ok {
+			if cols, _, err := term.GetSize(int(f.Fd())); err == nil && cols > 0 {
+				termCols = cols
+			}
+		}
+	}
 
 	switch format {
 	case formatPlain:
-		renderPlain(out, opts, useColor, thumbs, results)
+		renderPlain(out, opts, useColor, thumbs, results, termCols)
 		return nil
 	case formatURL:
 		for i, res := range results {

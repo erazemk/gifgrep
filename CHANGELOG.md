@@ -2,6 +2,12 @@
 
 ## 0.2.1 — Unreleased
 
+### Fixes
+- iTerm2 CLI `--thumbs`: animated GIFs (send raw bytes), correct title/URL alignment, wrap URLs, and add spacing between results.
+
+### Docs
+- iTerm2 protocol notes: document raw byte sending and aspect-ratio behavior for CLI vs TUI.
+
 ## 0.2.0 - 2026-01-01
 
 ### Features

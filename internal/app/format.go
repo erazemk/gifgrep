@@ -2,6 +2,7 @@ package app
 
 import (
 	"bufio"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -55,10 +56,11 @@ var (
 	}
 	sendThumbIterm = func(out *bufio.Writer, data []byte, cols, rows int) {
 		iterm.SendInlineFile(out, iterm.File{
-			Name:        "thumb.png",
+			Name:        thumbInlineName(data),
 			Data:        data,
 			WidthCells:  cols,
 			HeightCells: rows,
+			Stretch:     true,
 		})
 	}
 )
@@ -109,6 +111,7 @@ func renderPlain(
 	useColor bool,
 	thumbs termcaps.InlineProtocol,
 	results []model.Result,
+	termCols int,
 ) {
 	nextID := uint32(1)
 	withThumbs := thumbs != termcaps.InlineNone
@@ -121,13 +124,16 @@ func renderPlain(
 			nPrefix = fmt.Sprintf("%d. ", i+1)
 		}
 
-		if withThumbs {
-			if err := renderThumbBlock(out, thumbs, nextID, res, nPrefix, title, url, useColor); err != nil {
-				withThumbs = false
-			} else {
-				nextID++
-				continue
+		if withThumbs && renderThumbBlock(out, thumbs, nextID, res, nPrefix, title, url, useColor, termCols) == nil {
+			nextID++
+			if i < len(results)-1 {
+				if thumbs == termcaps.InlineIterm {
+					_, _ = fmt.Fprint(out, "\r\x1b[K\n")
+				} else {
+					_, _ = fmt.Fprintln(out)
+				}
 			}
+			continue
 		}
 
 		if useColor {
@@ -142,7 +148,7 @@ func renderPlain(
 	}
 }
 
-func renderThumbBlock(out *bufio.Writer, thumbs termcaps.InlineProtocol, id uint32, res model.Result, nPrefix, title, url string, useColor bool) error {
+func renderThumbBlock(out *bufio.Writer, thumbs termcaps.InlineProtocol, id uint32, res model.Result, nPrefix, title, url string, useColor bool, termCols int) error {
 	src := res.PreviewURL
 	if src == "" {
 		src = res.URL
@@ -151,44 +157,95 @@ func renderThumbBlock(out *bufio.Writer, thumbs termcaps.InlineProtocol, id uint
 	if err != nil {
 		return err
 	}
-	decoded, err := decodeThumb(data)
-	if err != nil {
-		return err
-	}
-	if decoded == nil || len(decoded.Frames) == 0 {
-		return fmt.Errorf("no frames")
-	}
 
 	cols := 16
 	rows := 8
-	if res.Width > 0 && res.Height > 0 {
-		rows = clampInt(3, 10, int(float64(cols)*0.5*float64(res.Height)/float64(res.Width)))
+	if w, h := thumbDims(data, res); w > 0 && h > 0 {
+		if thumbs != termcaps.InlineIterm {
+			rows = clampInt(3, 10, int(float64(cols)*0.5*float64(h)/float64(w)))
+		}
 	}
 
 	switch thumbs {
 	case termcaps.InlineNone:
 		return fmt.Errorf("inline thumbnails not supported")
 	case termcaps.InlineIterm:
-		sendThumbIterm(out, decoded.Frames[0].PNG, cols, rows)
+		if !isSupportedItermImage(data) && src != res.URL && res.URL != "" {
+			if fallback, err := fetchThumb(res.URL); err == nil {
+				data = fallback
+			}
+		}
+		if !isSupportedItermImage(data) {
+			return fmt.Errorf("unsupported image")
+		}
+		if len(data) == 0 {
+			return fmt.Errorf("empty image")
+		}
+		_, _ = fmt.Fprint(out, "\r")
+		sendThumbIterm(out, data, cols, rows)
+		if rows > 1 {
+			_, _ = fmt.Fprintf(out, "\x1b[%dA", rows-1)
+		}
 	case termcaps.InlineKitty:
+		decoded, err := decodeThumb(data)
+		if err != nil {
+			return err
+		}
+		if decoded == nil || len(decoded.Frames) == 0 {
+			return fmt.Errorf("no frames")
+		}
 		sendThumbKitty(out, id, decoded.Frames[0], cols, rows)
 	}
+
+	indentCols := cols + 2
+	if thumbs == termcaps.InlineIterm {
+		indentCols = cols
+	}
+	textWidth := termCols - indentCols - 1
+	if termCols <= 0 || textWidth <= 0 {
+		textWidth = 0
+	}
+
+	titleLine := nPrefix + title
+	titleLine = truncateText(titleLine, textWidth)
+
+	urlLines := []string{url}
+	if textWidth > 0 {
+		urlLines = wrapText(url, textWidth)
+	}
+	if len(urlLines) > rows-1 {
+		urlLines = urlLines[:rows-1]
+		urlLines[len(urlLines)-1] = truncateText(urlLines[len(urlLines)-1]+"…", textWidth)
+	}
+
 	for r := 0; r < rows; r++ {
 		line := ""
 		switch r {
 		case 0:
-			line = nPrefix + title
+			line = titleLine
 			if useColor {
 				line = "\x1b[1m" + line + "\x1b[0m"
 			}
-		case 1:
-			line = url
-			if useColor {
-				line = "\x1b[36m" + line + "\x1b[0m"
-			}
 		default:
+			if i := r - 1; i >= 0 && i < len(urlLines) {
+				line = urlLines[i]
+				if useColor {
+					line = "\x1b[36m" + line + "\x1b[0m"
+				}
+			}
 		}
-		_, _ = fmt.Fprint(out, strings.Repeat(" ", cols+2))
+		if thumbs == termcaps.InlineIterm {
+			col := indentCols + 1
+			if col < 1 {
+				col = 1
+			}
+			_, _ = fmt.Fprintf(out, "\x1b[%dG", col)
+			_, _ = fmt.Fprint(out, line)
+			_, _ = fmt.Fprint(out, "\x1b[K\n")
+			continue
+		}
+
+		_, _ = fmt.Fprint(out, strings.Repeat(" ", indentCols))
 		_, _ = fmt.Fprintln(out, line)
 	}
 	return nil
@@ -213,4 +270,95 @@ func clampInt(minVal, maxVal, v int) int {
 		return maxVal
 	}
 	return v
+}
+
+func thumbInlineName(data []byte) string {
+	if isGIFData(data) {
+		return "thumb.gif"
+	}
+	if isPNGData(data) {
+		return "thumb.png"
+	}
+	if isJPEGData(data) {
+		return "thumb.jpg"
+	}
+	return "thumb.bin"
+}
+
+func thumbDims(data []byte, res model.Result) (int, int) {
+	if isGIFData(data) {
+		if len(data) < 10 {
+			return 0, 0
+		}
+		w := int(binary.LittleEndian.Uint16(data[6:8]))
+		h := int(binary.LittleEndian.Uint16(data[8:10]))
+		return w, h
+	}
+	if isPNGData(data) {
+		if len(data) < 24 {
+			return 0, 0
+		}
+		w := int(binary.BigEndian.Uint32(data[16:20]))
+		h := int(binary.BigEndian.Uint32(data[20:24]))
+		return w, h
+	}
+	if res.Width > 0 && res.Height > 0 {
+		return res.Width, res.Height
+	}
+	return 0, 0
+}
+
+func isGIFData(data []byte) bool {
+	if len(data) < 6 {
+		return false
+	}
+	hdr := string(data[:6])
+	return hdr == "GIF87a" || hdr == "GIF89a"
+}
+
+func isPNGData(data []byte) bool {
+	if len(data) < 8 {
+		return false
+	}
+	return data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4e && data[3] == 0x47 &&
+		data[4] == 0x0d && data[5] == 0x0a && data[6] == 0x1a && data[7] == 0x0a
+}
+
+func isJPEGData(data []byte) bool {
+	return len(data) >= 3 && data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff
+}
+
+func isSupportedItermImage(data []byte) bool {
+	return isGIFData(data) || isPNGData(data) || isJPEGData(data)
+}
+
+func truncateText(s string, width int) string {
+	if width <= 0 {
+		return s
+	}
+	r := []rune(s)
+	if len(r) <= width {
+		return s
+	}
+	if width <= 1 {
+		return "…"
+	}
+	return string(r[:width-1]) + "…"
+}
+
+func wrapText(s string, width int) []string {
+	if width <= 0 || s == "" {
+		return []string{s}
+	}
+	var out []string
+	r := []rune(s)
+	for len(r) > 0 {
+		n := width
+		if n > len(r) {
+			n = len(r)
+		}
+		out = append(out, string(r[:n]))
+		r = r[n:]
+	}
+	return out
 }

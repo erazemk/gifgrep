@@ -16,12 +16,12 @@ Keys gifgrep uses:
 - `size`: file size in bytes (progress indicator)
 - `inline=1`: render inline instead of downloading to `~/Downloads`
 - `width`, `height`: **character cell** size (unitless numbers)
-- `preserveAspectRatio=1`: avoid stretching
+- `preserveAspectRatio`: `1` avoids stretching (TUI); `0` fills the fixed thumb block (CLI `--thumbs`)
 
 ## What gifgrep does
 
 - **TUI preview (iTerm2):** sends the preview GIF bytes, sized to the preview cell rectangle (animated GIFs play natively in iTerm2).
-- **CLI `--thumbs` (iTerm2):** sends a small PNG still (first decoded frame), sized to a small fixed cell block.
+- **CLI `--thumbs` (iTerm2):** sends the preview bytes sized to a small fixed cell block (animated when the preview is a GIF).
 
 ## Detection
 
@@ -31,4 +31,3 @@ iTerm2 also documents a “feature reporting” protocol for capability detectio
 
 - iTerm2 “Inline Images Protocol”: `https://iterm2.com/documentation-images.html`
 - `imgcat` utility: `https://iterm2.com/utilities/imgcat`
-

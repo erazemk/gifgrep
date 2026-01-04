@@ -13,6 +13,7 @@ type File struct {
 	Data        []byte
 	WidthCells  int
 	HeightCells int
+	Stretch     bool
 }
 
 // SendInlineFile emits iTerm2's OSC 1337 inline file sequence.
@@ -27,11 +28,15 @@ func SendInlineFile(out *bufio.Writer, f File) {
 	}
 	name = path.Base(name)
 
+	preserveAspectRatio := 1
+	if f.Stretch {
+		preserveAspectRatio = 0
+	}
 	args := []string{
 		"name=" + base64.StdEncoding.EncodeToString([]byte(name)),
 		fmt.Sprintf("size=%d", len(f.Data)),
 		"inline=1",
-		"preserveAspectRatio=1",
+		fmt.Sprintf("preserveAspectRatio=%d", preserveAspectRatio),
 	}
 	if f.WidthCells > 0 {
 		args = append(args, fmt.Sprintf("width=%d", f.WidthCells))
