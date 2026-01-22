@@ -211,6 +211,7 @@ func searchHelpExtras() []string {
 		"  gifgrep cats | head -n 5",
 		"  gifgrep cats --download --max 1 --format url",
 		"  gifgrep search --json cats | jq '.[] | .url'",
+		"  gifgrep search --source tenor cats",
 		"  GIPHY_API_KEY=... gifgrep search --source giphy cats",
 	}
 }

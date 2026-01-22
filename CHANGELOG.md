@@ -2,6 +2,9 @@
 
 ## 0.2.2 — Unreleased
 
+### Docs
+- Help: add explicit Tenor `--source` example.
+
 ## 0.2.1 - 2026-01-04
 
 ### Fixes
