@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.3 — Unreleased
+## 0.2.4 — Unreleased
+
+## 0.2.3 - 2026-02-04
 ### Fixes
 - TUI: after download, preview reloads from the saved full-res GIF.
 - TUI: prefetch full-res GIFs in the background (<=10MB) so selection swaps to high-res.

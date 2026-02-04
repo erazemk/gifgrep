@@ -6,7 +6,7 @@ const AppName = "gifgrep"
 
 const Tagline = "Grep the GIF. Stick the landing."
 
-var Version = "0.2.2"
+var Version = "0.2.3"
 
 type Result struct {
 	ID         string   `json:"id"`
