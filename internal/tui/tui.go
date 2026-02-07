@@ -411,6 +411,9 @@ func handleBrowseInput(state *appState, ev inputEvent, out *bufio.Writer) bool {
 			return false
 		}
 		switch ev.ch {
+		case 'c':
+			copySelected(state, out)
+			return false
 		case 'd':
 			downloadSelected(state, out, state.opts.Reveal)
 			return false
@@ -761,6 +764,7 @@ func drawHints(out *bufio.Writer, state *appState, layout layout) {
 		formatHint("/", "Edit"),
 		formatHint("↑↓", "Select"),
 		formatHint("d", "Download"),
+		formatHint("c", "Copy"),
 		formatHint("f", "Reveal"),
 		formatHint("q", "Quit"),
 	}, "  ")
